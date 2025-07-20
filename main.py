@@ -5,7 +5,7 @@ from conciliador import conciliar
 
 
 st.title("Click Click - Conciliador Bancario")
-st.warning("No subas archivos con datos sensibles.\nEsta app no guarda ni transmite tu información.", icon="⚠️")
+st.warning("La columna DATE del archivo QBO y BANCO debe estar organizada mes/dia/año", icon="⚠️")
 archivo_banco = st.file_uploader("Sube el archivo del BANCO", type=["csv", "xlsx"])
 archivo_qb = st.file_uploader("Sube el archivo de QUICKBOOKS", type=["csv", "xlsx"])
 
