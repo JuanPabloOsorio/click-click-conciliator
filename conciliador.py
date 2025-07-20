@@ -20,28 +20,14 @@ def convert_amount(valor, to_negative=False):
 def is_negative(number):
     return number < 0
 
-
-def convertir_fecha(fecha):
-    try:
-        # Si es Timestamp (datetime), convertir directo
-        if isinstance(fecha, (pd.Timestamp, datetime)):
-            return fecha.strftime('%m/%d/%y')
-
-        # Si es string en formato mm/dd/yyyy
-        if isinstance(fecha, str) and '/' in fecha:
-            partes = fecha.split('/')
-            if len(partes) == 3:
-                mes, dia, anio = partes
-                if len(anio) == 4:  # yyyy
-                    return datetime.strptime(fecha, '%m/%d/%Y').strftime('%m/%d/%y')
-                elif len(anio) == 2:  # yy
-                    return datetime.strptime(fecha, '%m/%d/%y').strftime('%m/%d/%y')
-        # Si es string ISO tipo yyyy-mm-dd
-        if isinstance(fecha, str) and '-' in fecha:
-            return pd.to_datetime(fecha).strftime('%m/%d/%y')
-    except:
-        pass
-    return fecha  # Si no se pudo procesar, deja igual
+def remove_leading_zeros(date_str):
+    parts = date_str.split('/')
+    if len(parts) == 3:
+        month = str(int(parts[0])) # Convert to int, then back to str to remove leading zero
+        day = str(int(parts[1]))
+        year = parts[2]
+        return f"{month}/{day}/{year}"
+    return date_str # Return original if not in expected format
 
 
 def conciliar(df_banco, df_qb):
@@ -73,12 +59,8 @@ def conciliar(df_banco, df_qb):
     
     #Normalize Dates
 # Forzar conversión sin ambigüedad
-
-    df_qb['Date'] = pd.to_datetime(df_qb['Date'], errors='coerce', infer_datetime_format=True, dayfirst=False)
-    df_banco['Date'] = pd.to_datetime(df_banco['Date'], errors='coerce', infer_datetime_format=True, dayfirst=False)
-    df_qb['Date'] = df_qb['Date'].dt.strftime('%m/%d/%y')
-    df_banco['Date'] = df_banco['Date'].dt.strftime('%m/%d/%y')
-
+    df_qb["Date"] = pd.to_datetime(df_qb['Date'], infer_datetime_format=True, format='mixed').dt.strftime('%m/%d/%Y')
+    df_banco["Date"] = pd.to_datetime(df_banco['Date'], infer_datetime_format=True, format='mixed').dt.strftime('%m/%d/%Y')
 
     matches = []
     usados_qb = set()
@@ -97,15 +79,16 @@ def conciliar(df_banco, df_qb):
                             "asegurate de haber descargado el archivo en xlsx\n" +
                             "O llena estos espacios en blanco. (puedes usar un 0)")
 
+
         if not coincidencias.empty:
             mejor = coincidencias.iloc[0]
             usados_qb.add(mejor.name)
             matches.append({
-                'QB_Fecha': mejor['Date'],
+                'QB_Fecha': mejor["Date"],
                 'QB_Desc': mejor.get('Memo', ''),
                 'QB_amount': mejor[amount],
-                'Banco_Fecha': row['Date'],
-                'Banco_Desc': row.get('description', ''),
+                'Banco_Fecha': row["Date"],
+                'Banco_Desc': row.get('Payee'),
                 'Banco_Monto': row['amount'],
                 'Estado': 'MATCH'
             })
@@ -114,8 +97,8 @@ def conciliar(df_banco, df_qb):
                 'QB_Fecha': '',
                 'QB_Desc': '',
                 'QB_amount': '',
-                'Banco_Fecha': row['Date'],
-                'Banco_Desc': row.get('description', ''),
+                'Banco_Fecha': row["Date"],
+                'Banco_Desc': row.get('Payee'),
                 'Banco_Monto': row['amount'],
                 'Estado': 'NO_MATCH'
             })

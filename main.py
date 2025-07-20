@@ -5,20 +5,20 @@ from conciliador import conciliar
 
 
 st.title("Click Click - Conciliador Bancario")
-
+st.warning("No subas archivos con datos sensibles.\nEsta app no guarda ni transmite tu información.", icon="⚠️")
 archivo_banco = st.file_uploader("Sube el archivo del BANCO", type=["csv", "xlsx"])
 archivo_qb = st.file_uploader("Sube el archivo de QUICKBOOKS", type=["csv", "xlsx"])
 
 if archivo_banco and archivo_qb:
     if archivo_banco.name.endswith(".csv"):
-        df_banco = pd.read_csv(archivo_banco)
+        df_banco = pd.read_csv(archivo_banco, dtype={"Date": str})
     else:
-        df_banco = pd.read_excel(archivo_banco)
+        df_banco = pd.read_excel(archivo_banco, dtype={"Date": str})
 
     if archivo_qb.name.endswith(".csv"):
-        df_qb = pd.read_csv(archivo_qb)
+        df_qb = pd.read_csv(archivo_qb, dtype={"Date": str})
     else:
-        df_qb = pd.read_excel(archivo_qb)
+        df_qb = pd.read_excel(archivo_qb, dtype={"Date": str})
 
     if st.button("Conciliar"):
         try:
@@ -36,7 +36,7 @@ if archivo_banco and archivo_qb:
                 label="Descargar resultado",
                 data=output,
                 file_name="resultado_conciliado.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
         except Exception as error:
             st.warning(error, icon="⚠️")
